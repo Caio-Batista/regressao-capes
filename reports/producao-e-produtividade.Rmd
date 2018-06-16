@@ -1,6 +1,9 @@
 ---
 title: "Regressão linear na prática"
-output: html_notebook
+output:
+ html_document:
+  toc: true
+  toc_float: true
 ---
 
 ```{r warning=FALSE, echo=FALSE}
@@ -106,7 +109,7 @@ Produza aqui a sua versão desse texto, portanto:
 
 -----
 
-*SUBSTITUA ESSE TEXTO*
+Nesse laboratório o objetivo é verificar, através de uma regressão linear simples, se a relação entre os docentes permanentes e a produção de conhecimento é significativa, do ponto de vista estatístico. A variável dependente nessa regressão é justamente a *produção do programa*, que é a variável que tentamos prever com esse modelo. Já a variável independente, é a quantidade de *docentes permanentes*, ligada a um fator de variação da reta, que é resultado da regressão. O modelo final da regrssão, pelos resultados obtidos, tem forma *Y* = 4.81337.*X* - 41.27309. Sendo, *X* = *docentes permanentes* e *Y* = *produção do programa*. A relação tem significância estatística comprovada pelo erro (b = [4.27; 5.36], IC com 95%), e o modelo consegue prever bem valores para essas variáveis. Essa regressão ainda é capaz de explicar 0.81% da variância da variávl dependente. A relação, por fim, é positiva e direta, conforme *X* cresce, *Y* cresce aproximadamente 5 vezes mais, menos uma constante.     
 
 -----
 
@@ -114,7 +117,7 @@ Dito isso, o que significa a relação que você encontrou na prática para ente
 
 -----
 
-*SUBSTITUA ESSE TEXTO PELA SUA DISCUSSÃO DOS RESULTADOS*
+Primeiramente, esses resultados indicam que, a relação entre produtividade e os docentes permanentes em programa de pós-graduação, existe e é forte. A relação é diretamente proporcional e crescente ao longo do eixo X, o que quer dizer, conforme o número de docentes aumenta, a produtividade também aumenta. Meu palpite é que, na área acadêmica, por terem mais pessoas envolvidas em pesquisas do que em graduações, por exemplo, tendem a produzir mais esse tipo de conhecimento. E se existem mais pesquisadores em determinado departamento ou universidade, essa instituição vai ter uma produtividade maior. 
 
 -----
 
@@ -156,7 +159,8 @@ Considerando agora esses três fatores, o que podemos dizer sobre como cada um d
 
 -----
 
-**EXPLICAÇÃO**: *Substitua esse texto por texto feito tal qual o que usamos com uma variável*
+**EXPLICAÇÃO**: 
+De forma análoga ao estudo anterior, temos a forma dessa regressão sendo: *Y* = 3.4997112 *X1* -0.1949515 *X2* + 1.0007711 *X3* -14.3663077. Sendo *Y* = *produção do programa*, como a variável dependente, e *X1* = *docentes permanentes*, *X2* = *mestrados* e *X3* = *doutorados*, como variáveis independentes. Tem relação significativa com erros (b = [2.58; 4.42]) ,  (b = [-0.35; -0.03]) e (b = [0.63;1.36]), todos com 95% de confiança, são respectivos a cada uma das variáveis independentes. Podemos ver que, mesmo com a adição de mais fatores para a regressão, o fator mais influente, positivamente, para definir o valor da produtividade é a *quantidade de docentes permanentes*. Os doutorados tem uma relação linear e proporcional à produtividade. Entretanto, podemos notar uma relação negativa para o mestrado, o que é estranho, pois se interpretarmos literalmente esses números poderíamos assumir que os mestrados pioram a produtividade de um departamento. Ele explica mais, no sentido, que dá mais uma informação que ainda não obtivemos do modelo anterior, a relação entre os doutorados e a produtividade. 
 
 -----
 
@@ -166,3 +170,41 @@ Considerando agora esses três fatores, o que podemos dizer sobre como cada um d
 Diferente de medirmos produção (total produzido), é medirmos produtividade (produzido / utilizado). Abaixo focaremos nessa análise. Para isso crie um modelo que investiga como um conjunto de fatores que você julga que são relevantes se relacionam com a produtividade dos programas. Crie um modelo que avalie como _pelo menos 3 fatores_ se relacionam com a produtividade de um programa. Pode reutilizar fatores que já definimos e analizamos para produção. Mas cuidado para não incluir fatores que sejam função linear de outros já incluídos (ex: incluir A, B e um tercero C=A+B)
 
 Produza abaixo o modelo e um texto que comente (i) o modelo, tal como os que fizemos antes, e (ii) as implicações - o que aprendemos sobre como funcionam programas de pós no brasil?.
+
+```{r}
+
+cacc <- cacc %>%
+  mutate(
+    d =  `Docentes permanentes` + `Docentes visitantes`,
+    producao = producao
+  ) 
+
+
+modelo2 = lm(producao ~ d + mestrados_pprof + doutorados_pprof, data = cacc)
+#  `Docentes permanentes`+`Docentes colaboradores`+
+tidy(modelo2, conf.int = TRUE, conf.level = 0.95)
+glance(modelo2)
+
+```
+
+
+-----
+
+**EXPLICAÇÃO**: 
+Primeiramente, explicando a variável *d*, é uma variável independente de *Y* mas que é formada, tem dependência, por outras duas variáveis: *Docentes permanentes* e *Docentes visitantes*. O intuito em criar essa variável é verificar, se no conjunto total de docentes, a influência na produtividade é maior.  Forma da regressão: *Y* = 3.9285492 *X1* + 0.1354685	 *X2* + 21.6714276 *X3* -33.4480712 Sendo *Y* = *produção do programa*, como a variável dependente, e *X1* = *d*, *X2* = *mestrados_pprof* e *X3* = *doutorados_pprof*, como variáveis independentes. Tem relação significativa com erros (b = [3.21; 4.64]) ,  (b = [-3.32; 3.59]) e (b = [9.77; 33.56]), todos com 95% de confiança, são respectivos a cada uma das variáveis independentes. Podemos notar aqui que o fator que mais afeta a produtividade é a *proporção de doutorados por docente permanente*, uma relação diretamente proporcional e positiva, quando *X3* cresce, *Y* cresce 21 vezes seu valor. 
+
+-----
+
+
+
+```{r}
+cacc_augmented = cacc %>% 
+  add_predictions(modelo2) 
+
+cacc_augmented %>% 
+  ggplot(aes(x = doutorados_pprof, y= pred)) + 
+  geom_line(aes(y = pred), colour = "brown") + 
+  geom_point(aes(y = producao)) + 
+  labs(y = "Produção do programa")
+```
+
